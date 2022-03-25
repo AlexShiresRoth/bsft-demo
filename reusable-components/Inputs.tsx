@@ -10,6 +10,7 @@ export type TextInputParams = {
   labelStyle: any;
   placeholderText: string;
   isRequired: boolean;
+  type: string;
 };
 
 const InputContainer = styled.div`
@@ -26,6 +27,7 @@ export const TextInput = ({
   labelStyle,
   placeholderText,
   isRequired,
+  type,
 }: TextInputParams) => {
   return (
     <InputContainer>
@@ -37,6 +39,7 @@ export const TextInput = ({
         onChange={callback}
         value={value}
         required={isRequired ? true : false}
+        type={type}
       />
     </InputContainer>
   );

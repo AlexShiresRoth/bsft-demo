@@ -1,7 +1,13 @@
-import React, { useState } from "react";
+import { useMutation } from "@apollo/client";
+import { useRouter } from "next/router";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import Colors from "../../constants/Colors";
+import { CREATE_CUSTOMER } from "../../graphql/mutations/customer.mutation";
+import { FormContext } from "../../pages";
+import { Alert } from "../../reusable-components/Alert";
 import { TextInput } from "../../reusable-components/Inputs";
+import { LoadingSpinner } from "../../reusable-components/LoadingSpinner";
 
 const Container = styled.section`
   width: 100%;
@@ -82,7 +88,7 @@ type formData = {
   firstname: string;
   lastname: string;
   email: string;
-  phone: string;
+  phone_number: string;
   password: string;
   passwordTwo: string;
 };
@@ -95,23 +101,56 @@ type InputParams = {
   value: string;
   placeholderText: string;
   labelStyle: any;
+  type: string;
 };
 
 //TODO create submit event and mutation
 const SignupForm = () => {
+  const router = useRouter();
+
+  const ref = useRef<HTMLElement | null>(null);
+
+  const { setFormRef } = useContext(FormContext);
+
   const [data, setFormData] = useState<formData>({
     firstname: "",
     lastname: "",
-    phone: "",
+    phone_number: "",
     email: "",
     password: "",
     passwordTwo: "",
   });
 
-  const { firstname, lastname, phone, email, password, passwordTwo } = data;
+  const [error, setError] = useState<string | any>(null);
+
+  const { firstname, lastname, phone_number, email, password, passwordTwo } =
+    data;
 
   const handleInputChangeEvent = (e: React.FormEvent<HTMLInputElement>) =>
     setFormData({ ...data, [e.currentTarget.name]: e.currentTarget.value });
+
+  const [createCustomer, { data: customerData, loading }] =
+    useMutation(CREATE_CUSTOMER);
+
+  const formSubmit = async (
+    e: React.FormEvent<HTMLButtonElement> | React.FormEvent<HTMLFormElement>
+  ) => {
+    e.preventDefault();
+
+    try {
+      const request = await createCustomer({ variables: { input: data } });
+
+      console.log("request data", request.data);
+
+      if (request.data.createCustomer.success) {
+        router.push("/dashboard");
+      }
+    } catch (error) {
+      console.error(error);
+      setError(error);
+      return error;
+    }
+  };
 
   const inputStyle = {
     border: 0,
@@ -139,6 +178,8 @@ const SignupForm = () => {
       style: inputStyle,
       placeholderText: "Enter your first name",
       labelStyle,
+
+      type: "text",
     },
     {
       label: "Enter your last name",
@@ -148,6 +189,7 @@ const SignupForm = () => {
       style: inputStyle,
       placeholderText: "Enter your last name",
       labelStyle,
+      type: "text",
     },
     {
       label: "Enter your email",
@@ -157,15 +199,17 @@ const SignupForm = () => {
       style: inputStyle,
       placeholderText: "enter your email",
       labelStyle,
+      type: "text",
     },
     {
       label: "Enter your phone",
-      name: "phone",
-      value: phone,
+      name: "phone_number",
+      value: phone_number,
       isRequired: true,
       style: inputStyle,
       placeholderText: "enter your phone",
       labelStyle,
+      type: "text",
     },
     {
       label: "Create a password",
@@ -175,6 +219,7 @@ const SignupForm = () => {
       style: inputStyle,
       placeholderText: "Create a password",
       labelStyle,
+      type: "password",
     },
     {
       label: "Confirm a password",
@@ -184,15 +229,31 @@ const SignupForm = () => {
       style: inputStyle,
       placeholderText: "Confirm your password",
       labelStyle,
+      type: "password",
     },
   ];
 
+  useEffect(() => {
+    if (ref.current) {
+      setFormRef(ref);
+    }
+  }, [ref]);
+
+  console.log("ref", ref.current);
+
   return (
-    <Container>
+    <Container ref={ref}>
       <Space />
       <Background />
+      {error !== null && (
+        <Alert
+          message={error.message}
+          status="danger"
+          callback={() => setError(null)}
+        />
+      )}
       <Content>
-        <Form>
+        <Form onSubmit={(e) => formSubmit(e)}>
           <Title color={Colors.text}>Signup and get started today!</Title>
           <span
             style={{
@@ -212,6 +273,7 @@ const SignupForm = () => {
               value,
               isRequired,
               placeholderText,
+              type,
             } = inputObj;
             return (
               <TextInput
@@ -224,10 +286,21 @@ const SignupForm = () => {
                 placeholderText={placeholderText}
                 callback={handleInputChangeEvent}
                 key={index}
+                type={type}
               />
             );
           })}
-          <SubmitButton color={Colors.main}>Signup!</SubmitButton>
+          {loading ? (
+            <LoadingSpinner />
+          ) : (
+            <SubmitButton
+              color={Colors.main}
+              onClick={(e) => formSubmit(e)}
+              onSubmit={(e) => formSubmit(e)}
+            >
+              Signup!
+            </SubmitButton>
+          )}
         </Form>
       </Content>
     </Container>

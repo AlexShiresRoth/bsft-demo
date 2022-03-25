@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useContext } from "react";
 import styled from "styled-components";
 import Colors from "../../constants/Colors";
+import { FormContext } from "../../pages";
 
 const Container = styled.header`
   width: 100%;
@@ -56,6 +57,18 @@ const Btn = styled.button`
 `;
 
 const Hero = () => {
+  const context = useContext(FormContext);
+
+  const { formRef: ref } = context;
+
+  const handleScroll = () => {
+    if (ref?.current) {
+      ref.current.scrollIntoView({
+        behavior: "smooth",
+      });
+    }
+  };
+
   return (
     <Container>
       <Content>
@@ -63,7 +76,9 @@ const Hero = () => {
         <Subheading>
           Signup to get a guitar or accessories mailed to you every month.
         </Subheading>
-        <Btn color={Colors.main}>Signup</Btn>
+        <Btn color={Colors.main} onClick={() => handleScroll()}>
+          Signup
+        </Btn>
       </Content>
     </Container>
   );
