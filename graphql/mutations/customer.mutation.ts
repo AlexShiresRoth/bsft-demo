@@ -14,3 +14,18 @@ export const CREATE_CUSTOMER = gql`
     }
   }
 `;
+
+export const AUTHENTICATE = gql`
+  mutation login($input: LoginInput!) {
+    login(input: $input) {
+      message
+      success
+      Account {
+        email
+        lastname
+        firstname
+      }
+      token
+    }
+  }
+`;

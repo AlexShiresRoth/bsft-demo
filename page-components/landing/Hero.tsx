@@ -1,7 +1,9 @@
 import React, { useContext } from "react";
 import styled from "styled-components";
 import Colors from "../../constants/Colors";
+import { useAppSelector } from "../../hooks/reduxHook";
 import { FormContext } from "../../pages";
+import { selectCustomer } from "../../redux/customer.reducer";
 
 const Container = styled.header`
   width: 100%;
@@ -68,6 +70,10 @@ const Hero = () => {
       });
     }
   };
+
+  const customerState = useAppSelector(selectCustomer);
+
+  console.log("state obj", customerState);
 
   return (
     <Container>

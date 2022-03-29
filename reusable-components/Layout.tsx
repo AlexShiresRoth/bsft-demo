@@ -1,8 +1,11 @@
 import Link from "next/link";
-import React, { useContext } from "react";
+import { useRouter } from "next/router";
+import React, { useContext, useEffect } from "react";
 import styled from "styled-components";
 import Colors from "../constants/Colors";
+import { useAppDispatch, useAppSelector } from "../hooks/reduxHook";
 import { FormContext } from "../pages";
+import { selectCustomer, signout } from "../redux/customer.reducer";
 
 const Nav = styled.nav`
   display: flex;
@@ -67,35 +70,70 @@ export type Props = {
 
 const Layout = ({ children }: Props) => {
   const { formRef } = useContext(FormContext);
+
+  const router = useRouter();
+
   const handleScroll = () => {
     if (formRef?.current) {
       formRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  const customerState = useAppSelector(selectCustomer);
+
+  const dispatch = useAppDispatch();
+
+  const handleSignout = () => {
+    //remove auth credentials
+    dispatch(signout());
+    //route back to landing
+    router.push("/");
+  };
+
   return (
     <Main>
       <Nav color={Colors.main}>
         <NavContent>
           <NavCol>
             <NavTitle color="#fefefe">
-              <Link href="/">
+              <Link
+                href={
+                  customerState.customer.isAuthenticated ? "/dashboard" : "/"
+                }
+              >
                 <a>Guitar Fix</a>
               </Link>
             </NavTitle>
           </NavCol>
-          <NavCol>
-            <Link href="/login">
-              <a style={{ color: "#fff", margin: "0 .5rem " }}>Login</a>
-            </Link>
-            <span style={{ color: "#fff", margin: "0 .5rem " }}>|</span>
+          {!customerState.customer.isAuthenticated ? (
+            <NavCol>
+              <Link href="/login">
+                <a style={{ color: "#fff", margin: "0 .5rem " }}>Login</a>
+              </Link>
+              <span style={{ color: "#fff", margin: "0 .5rem " }}>|</span>
 
-            <FakeLink
-              style={{ color: "#fff", margin: "0 .5rem " }}
-              onClick={() => handleScroll()}
-            >
-              Signup
-            </FakeLink>
-          </NavCol>
+              <FakeLink
+                style={{ color: "#fff", margin: "0 .5rem " }}
+                onClick={() => handleScroll()}
+              >
+                Signup
+              </FakeLink>
+            </NavCol>
+          ) : (
+            <NavCol>
+              <Link href="/account">
+                <a style={{ color: "#fff", margin: "0 .5rem " }}>Account</a>
+              </Link>
+              <span style={{ color: "#fff", margin: "0 .5rem " }}>|</span>
+
+              <FakeLink
+                style={{ color: "#fff", margin: "0 .5rem " }}
+                onClick={() => handleSignout()}
+              >
+                Sign Out
+              </FakeLink>
+            </NavCol>
+          )}
         </NavContent>
       </Nav>
       {children}

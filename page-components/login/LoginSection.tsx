@@ -1,7 +1,14 @@
-import React, { useState } from "react";
+import { useMutation } from "@apollo/client";
+import { useRouter } from "next/router";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Colors from "../../constants/Colors";
+import { AUTHENTICATE } from "../../graphql/mutations/customer.mutation";
+import { useAppDispatch, useAppSelector } from "../../hooks/reduxHook";
+import { authenticate, selectCustomer } from "../../redux/customer.reducer";
+import { Alert } from "../../reusable-components/Alert";
 import { TextInput } from "../../reusable-components/Inputs";
+import { LoadingSpinner } from "../../reusable-components/LoadingSpinner";
 
 const Section = styled.section`
   width: 100%;
@@ -63,10 +70,62 @@ export const LoginSection = () => {
     password: "",
   });
 
-  const handleInputChangeEvent = (e: React.FormEvent<HTMLInputElement>) =>
-    setFormData({ ...data, [e.currentTarget.name]: e.currentTarget.value });
+  const [alert, setAlert] = useState<string>("");
+
+  const router = useRouter();
+
+  const customerState = useAppSelector(selectCustomer);
+
+  const handleInputChangeEvent = (
+    e: React.FormEvent<HTMLInputElement> | React.FormEvent<HTMLButtonElement>
+  ) => setFormData({ ...data, [e.currentTarget.name]: e.currentTarget.value });
 
   const { email, password } = data;
+
+  const dispatch = useAppDispatch();
+
+  const [login, { error, data: loginData, loading }] =
+    useMutation(AUTHENTICATE);
+
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement> | React.FormEvent<HTMLElement>
+  ) => {
+    e.preventDefault();
+
+    try {
+      const request = await login({
+        variables: {
+          input: {
+            email,
+            password,
+          },
+        },
+      });
+
+      console.log("request", request.data);
+      if (request.data.login.token) {
+        dispatch(authenticate({ token: request.data.login.token }));
+      }
+    } catch (error) {
+      console.error(error);
+
+      return error;
+    }
+  };
+
+  //set an alert depending on error
+  useEffect(() => {
+    if (error) {
+      setAlert(error.message);
+    }
+  }, [error]);
+
+  //navigate user to dashboard if authentication is successful
+  useEffect(() => {
+    if (customerState.customer.isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [customerState.customer.isAuthenticated]);
 
   const inputStyle = {
     border: 0,
@@ -111,7 +170,14 @@ export const LoginSection = () => {
 
   return (
     <Section>
-      <Form>
+      {alert !== "" && (
+        <Alert
+          message={error?.message || ""}
+          status="danger"
+          callback={() => setAlert("")}
+        />
+      )}
+      <Form onSubmit={(e) => handleSubmit(e)}>
         <h1>Welcome back, please login to continue</h1>
         <FormContent>
           {DATA.map((inputData: InputParams, index: number) => {
@@ -141,7 +207,17 @@ export const LoginSection = () => {
             );
           })}
         </FormContent>
-        <LoginButton color={Colors.main}>Login</LoginButton>
+        {loading ? (
+          <LoadingSpinner />
+        ) : (
+          <LoginButton
+            color={Colors.main}
+            onClick={(e) => handleSubmit(e)}
+            onSubmit={(e) => handleSubmit(e)}
+          >
+            Login
+          </LoginButton>
+        )}
       </Form>
     </Section>
   );
