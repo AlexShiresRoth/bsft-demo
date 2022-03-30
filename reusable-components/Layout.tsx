@@ -1,8 +1,11 @@
+import { useMutation } from "@apollo/client";
+import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useContext, useEffect } from "react";
 import styled from "styled-components";
 import Colors from "../constants/Colors";
+import { UPDATE_CUSTOMER } from "../graphql/mutations/customer.mutation";
 import { useAppDispatch, useAppSelector } from "../hooks/reduxHook";
 import { FormContext } from "../pages";
 import { selectCustomer, signout } from "../redux/customer.reducer";
@@ -89,6 +92,35 @@ const Layout = ({ children }: Props) => {
     //route back to landing
     router.push("/");
   };
+
+  const [updateCustomer] = useMutation(UPDATE_CUSTOMER);
+
+  const updateCustomerWithOSID = async (id: string) => {
+    try {
+      if (id) {
+        const request = await updateCustomer({
+          variables: {
+            input: {
+              custom_field_key: "onesignal_webpush_id",
+              custom_field_value: id,
+            },
+          },
+        });
+        console.log("request", request.data);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (window.localStorage.getItem("osId")) {
+        const id = window.localStorage.getItem("osId") || "";
+        if (id !== "") updateCustomerWithOSID(id);
+      }
+    }
+  }, []);
 
   return (
     <Main>

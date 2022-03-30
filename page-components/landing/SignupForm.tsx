@@ -4,7 +4,9 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import Colors from "../../constants/Colors";
 import { CREATE_CUSTOMER } from "../../graphql/mutations/customer.mutation";
+import { useAppDispatch } from "../../hooks/reduxHook";
 import { FormContext } from "../../pages";
+import { authenticate } from "../../redux/customer.reducer";
 import { Alert } from "../../reusable-components/Alert";
 import { TextInput } from "../../reusable-components/Inputs";
 import { LoadingSpinner } from "../../reusable-components/LoadingSpinner";
@@ -112,6 +114,8 @@ const SignupForm = () => {
 
   const { setFormRef } = useContext(FormContext);
 
+  const dispatch = useAppDispatch();
+
   const [data, setFormData] = useState<formData>({
     firstname: "",
     lastname: "",
@@ -143,7 +147,10 @@ const SignupForm = () => {
       console.log("request data", request.data);
 
       if (request.data.createCustomer.success) {
-        router.push("/dashboard");
+        //auth in redux store
+        dispatch(authenticate({ token: request.data.createCustomer.token }));
+        //then nav to next page
+        if (request.data.createCustomer.token) router.push("/dashboard");
       }
     } catch (error) {
       console.error(error);

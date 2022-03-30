@@ -11,6 +11,7 @@ export const CREATE_CUSTOMER = gql`
         customer_id
         email
       }
+      token
     }
   }
 `;
@@ -26,6 +27,15 @@ export const AUTHENTICATE = gql`
         firstname
       }
       token
+    }
+  }
+`;
+
+export const UPDATE_CUSTOMER = gql`
+  mutation updateCustomer($input: UpdateCustomerInput!) {
+    updateCustomer(input: $input) {
+      message
+      success
     }
   }
 `;
